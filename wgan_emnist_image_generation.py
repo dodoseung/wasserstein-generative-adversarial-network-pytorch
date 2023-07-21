@@ -61,7 +61,7 @@ print(model, device)
 
 # Set the criterion and optimizer
 g_optimizer = optim.RMSprop(model.G.parameters(), lr=config['train']['lr'])
-d_optimizer = optim.RMSprop(model.C.parameters(), lr=config['train']['lr'])
+c_optimizer = optim.RMSprop(model.C.parameters(), lr=config['train']['lr'])
 criterion = nn.BCELoss()
 
 # Set values
@@ -71,12 +71,12 @@ gen_iteration = config ['train']['gen_iteration']
 crt_clip_value = config['train']['crt_clip_value']
 
 # Training
-def train(epoch, train_loader, g_optimizer, d_optimizer):
+def train(epoch, train_loader, g_optimizer, c_optimizer):
   model.train()
   g_train_loss = 0.0
   g_train_num = 0
-  d_train_loss = 0.0
-  d_train_num = 0
+  c_train_loss = 0.0
+  c_train_num = 0
   
   for i, data in enumerate(train_loader, 0):
     # Critic
@@ -93,19 +93,19 @@ def train(epoch, train_loader, g_optimizer, d_optimizer):
     fake_score = model.C(fake_img)
     
     # Loss for the critic with EM distance
-    d_loss = fake_score.mean() - real_score.mean()
+    c_loss = fake_score.mean() - real_score.mean()
     
     # Training for the critic
-    d_optimizer.zero_grad()
-    d_loss.backward()
-    d_optimizer.step()
+    c_optimizer.zero_grad()
+    c_loss.backward()
+    c_optimizer.step()
     
     # Clip weights of discriminator
     for p in model.C.parameters():
       p.data.clamp_(-crt_clip_value, crt_clip_value)
     
     # Generator
-    if i // gen_iteration == 0:
+    if i % gen_iteration == 0:
       # Get the fake images and scores
       z = 2 * torch.rand(batch_size, z_latent, device=device) - 1
       fake_img = model.G(z)
@@ -122,22 +122,22 @@ def train(epoch, train_loader, g_optimizer, d_optimizer):
       g_train_num += fake_img.size(0)
 
     # loss
-    d_train_loss += d_loss.item()
-    d_train_num += real_img.size(0)
+    c_train_loss += c_loss.item()
+    c_train_num += real_img.size(0)
     
     if i % config['others']['log_period'] == 0 and i != 0:
-      print(f'[{epoch}, {i}]\t Train loss: (G){g_train_loss / g_train_num:.10f}, (D){d_train_loss / d_train_num:.10f}')
+      print(f'[{epoch}, {i}]\t Train loss: (G){g_train_loss / g_train_num:.10f}, (D){c_train_loss / c_train_num:.10f}')
   
   # Average loss
-  d_train_loss /= d_train_num
+  c_train_loss /= c_train_num
   
-  return d_train_loss
+  return c_train_loss
 
 # Test
 def valid(test_loader):
   model.eval()
   g_test_loss = 0.0
-  d_test_loss = 0.0
+  c_test_loss = 0.0
   test_loss = 0.0
   test_num = 0
 
@@ -156,7 +156,7 @@ def valid(test_loader):
     fake_score = model.C(fake_img)
     
     # Loss for the critic with EM distance
-    d_loss = fake_score.mean() - real_score.mean()
+    c_loss = fake_score.mean() - real_score.mean()
     
     # Generator
     # Get the fake images and scores
@@ -169,7 +169,7 @@ def valid(test_loader):
     
     # loss
     g_test_loss += g_loss.item()
-    d_test_loss += d_loss.item()
+    c_test_loss += c_loss.item()
     test_num += real_img.size(0)
   
   # Test accuracy
@@ -181,7 +181,7 @@ def valid(test_loader):
 if __name__ == '__main__':
   for epoch in range(config['train']['epochs']):  # loop over the dataset multiple times
     # Training
-    train_loss = train(epoch, train_loader, g_optimizer, d_optimizer)
+    train_loss = train(epoch, train_loader, g_optimizer, c_optimizer)
     
     # Validation
     test_accuracy = valid(test_loader)

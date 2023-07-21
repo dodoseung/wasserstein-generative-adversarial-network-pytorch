@@ -32,7 +32,7 @@ train:
   epochs: 500
   lr: 0.001
   gen_iteration : 5
-  crt_clip_value : 0.005
+  crt_clip_value : 0.02
 
 # Save
 save:

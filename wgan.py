@@ -1,7 +1,7 @@
 import torch.nn.functional as F
 import torch.nn as nn
 
-# Generator of Ganerative Adversarial Network
+# Wasserstein Generative Adversarial Network
 class WGAN(nn.Module):
     def __init__(self, gen_latent_z=100, gen_init_layer=[7,7,64], gen_conv_trans=[2,2,1,1], gen_conv_filters=[128,64,64,1],
                  gen_conv_kernels=[5,5,5,5], gen_conv_strides=[1,1,1,1], gen_conv_pads=[2,2,2,2], gen_dropout_rate=0.1,
