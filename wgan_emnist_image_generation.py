@@ -74,8 +74,9 @@ crt_clip_value = config['train']['crt_clip_value']
 def train(epoch, train_loader, g_optimizer, d_optimizer):
   model.train()
   g_train_loss = 0.0
+  g_train_num = 0
   d_train_loss = 0.0
-  train_num = 0
+  d_train_num = 0
   
   for i, data in enumerate(train_loader, 0):
     # Critic
@@ -118,16 +119,17 @@ def train(epoch, train_loader, g_optimizer, d_optimizer):
       
       # loss
       g_train_loss += g_loss.item()
+      g_train_num += fake_img.size(0)
 
     # loss
     d_train_loss += d_loss.item()
-    train_num += real_img.size(0)
+    d_train_num += real_img.size(0)
     
     if i % config['others']['log_period'] == 0 and i != 0:
-      print(f'[{epoch}, {i}]\t Train loss: (G){g_train_loss / train_num:.10f}, (D){d_train_loss / train_num:.10f}')
+      print(f'[{epoch}, {i}]\t Train loss: (G){g_train_loss / g_train_num:.10f}, (D){d_train_loss / d_train_num:.10f}')
   
   # Average loss
-  d_train_loss /= train_num
+  d_train_loss /= d_train_num
   
   return d_train_loss
 
