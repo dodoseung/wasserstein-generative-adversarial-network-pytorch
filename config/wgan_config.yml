@@ -1,0 +1,43 @@
+# Data parameters
+data:
+  seed: 777
+  data_path: '~/.pytorch/EMNIST_data/'
+  download: True
+  batch_size: 1024
+  shuffle: True
+  drop_last: True
+  download: True
+  num_workers: 4
+  img_size: [28, 28]
+
+# Model parameters
+model:
+  gen_latent_z : 100
+  gen_init_layer : [7,7,64]
+  gen_conv_trans : [2,2,1,1]
+  gen_conv_filters : [128,64,64,1]
+  gen_conv_kernels : [5,5,5,5]
+  gen_conv_strides : [1,1,1,1]
+  gen_conv_pads : [2,2,2,2]
+  gen_dropout_rate : 0.1
+  crt_input_img : [28,28,1]
+  crt_conv_filters : [64,64,128,128]
+  crt_conv_kernels : [5,5,5,5]
+  crt_conv_strides : [2,2,2,1]
+  crt_conv_pads : [2,2,2,2]
+  crt_dropout_rate : 0.4
+
+# Training parameters
+train:
+  epochs: 500
+  lr: 0.001
+  gen_iteration : 5
+  crt_clip_value : 0.005
+
+# Save
+save:
+  model_name: 'emnist'
+
+# Other parameters
+others:
+  log_period: 10
