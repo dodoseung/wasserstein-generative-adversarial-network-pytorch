@@ -28,12 +28,6 @@ train_data = datasets.CIFAR10(config['data']['data_path'], download=config['data
 train_data = torch.utils.data.Subset(train_data, np.where(np.array(train_data.targets) == 7)[0])
 train_loader = torch.utils.data.DataLoader(train_data, batch_size=config['data']['batch_size'], shuffle=config['data']['shuffle'], drop_last=config['data']['drop_last'])
 
-# Set the test data
-test_data = datasets.CIFAR10(config['data']['data_path'], download=config['data']['download'], train=False, transform=transform)
-# Split the horse data
-test_data = torch.utils.data.Subset(test_data, np.where(np.array(test_data.targets) == 7)[0])
-test_loader = torch.utils.data.DataLoader(test_data, batch_size=config['data']['batch_size'], shuffle=config['data']['shuffle'], drop_last=config['data']['drop_last'])
-
 # Set the model
 model = WGAN(gen_latent_z=config['model']['gen_latent_z'], gen_init_layer=config['model']['gen_init_layer'],
             gen_conv_trans=config['model']['gen_conv_trans'], gen_conv_filters=config['model']['gen_conv_filters'],
@@ -119,62 +113,15 @@ def train(epoch, train_loader, g_optimizer, c_optimizer):
   
   return c_train_loss
 
-# Test
-def valid(test_loader):
-  model.eval()
-  g_test_loss = 0.0
-  c_test_loss = 0.0
-  test_loss = 0.0
-  test_num = 1
-
-  for _, data in enumerate(test_loader):
-    # Critic
-    # get the inputs; data is a list of [inputs, labels]
-    real_img, _ = data
-    
-    # Transfer data to device
-    real_img = real_img.to(device)
-    real_score = model.C(real_img)
-
-    # Generate generated image
-    z = 2 * torch.rand(batch_size, z_latent, device=device) - 1
-    fake_img = model.G(z)
-    fake_score = model.C(fake_img)
-    
-    # Loss for the critic with EM distance
-    c_loss = fake_score.mean() - real_score.mean()
-    
-    # Generator
-    # Get the fake images and scores
-    z = 2 * torch.rand(batch_size, z_latent, device=device) - 1
-    fake_img = model.G(z)
-    fake_score = model.C(fake_img)
-
-    # Training for the generator
-    g_loss = - fake_score.mean()
-    
-    # loss
-    g_test_loss += g_loss.item()
-    c_test_loss += c_loss.item()
-    test_num += real_img.size(0)
-  
-  # Test accuracy
-  test_accuracy = test_loss / test_num
-  
-  return test_accuracy
-
 # Main
 if __name__ == '__main__':
   for epoch in range(config['train']['epochs']):  # loop over the dataset multiple times
     # Training
     train_loss = train(epoch, train_loader, g_optimizer, c_optimizer)
     
-    # Validation
-    test_accuracy = valid(test_loader)
-    
     # Print the log
-    print(f'Epoch: {epoch}\t Train loss: {train_loss:.10f}\t Valid accuracy: {test_accuracy:.10f}')
+    print(f'Epoch: {epoch}\t Train loss: {train_loss:.10f}')
     
     # Save the model
-    save_model(model_name=config['save']['model_name'], epoch=epoch, model=model, optimizer=c_optimizer ,loss=train_loss, config=config)
+    save_model(model_name=config['save']['model_name'], epoch=epoch, model=model, optimizer=c_optimizer, loss=train_loss, config=config)
     
