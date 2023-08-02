@@ -6,10 +6,11 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 
+import numpy as np
 from utils import save_model, load_yaml
 
 # Set the configuration
-config = load_yaml("./config/wgan_config.yml")
+config = load_yaml("./config/wgan_cifar10_config.yml")
 
 # Training setting
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -22,31 +23,16 @@ transform = transforms.Compose([transforms.ToTensor(),
                                 transforms.Resize(config['data']['img_size'])])
 
 # Set the training data
-train_data = datasets.EMNIST(config['data']['data_path'],
-                             download=config['data']['download'],
-                             split='mnist',
-                             train=True,
-                             transform=transform)
-train_loader = torch.utils.data.DataLoader(train_data,
-                                           batch_size=config['data']['batch_size'],
-                                           shuffle=config['data']['shuffle'],
-                                           num_workers=config['data']['num_workers'],
-                                           drop_last=config['data']['drop_last'])
+train_data = datasets.CIFAR10(config['data']['data_path'], download=config['data']['download'], train=True, transform=transform)
+# Split the horse data
+train_data = torch.utils.data.Subset(train_data, np.where(np.array(train_data.targets) == 7)[0])
+train_loader = torch.utils.data.DataLoader(train_data, batch_size=config['data']['batch_size'], shuffle=config['data']['shuffle'], drop_last=config['data']['drop_last'])
 
 # Set the test data
-test_data = datasets.EMNIST(config['data']['data_path'],
-                            download=config['data']['download'],
-                            split='mnist',
-                            train=False,
-                            transform=transform)
-test_loader = torch.utils.data.DataLoader(test_data,
-                                          batch_size=config['data']['batch_size'],
-                                          shuffle=config['data']['shuffle'],
-                                          num_workers=config['data']['num_workers'],
-                                          drop_last=config['data']['drop_last'])
-
-# Check the categories
-print(len(train_data.classes))
+test_data = datasets.CIFAR10(config['data']['data_path'], download=config['data']['download'], train=False, transform=transform)
+# Split the horse data
+test_data = torch.utils.data.Subset(test_data, np.where(np.array(test_data.targets) == 7)[0])
+test_loader = torch.utils.data.DataLoader(test_data, batch_size=config['data']['batch_size'], shuffle=config['data']['shuffle'], drop_last=config['data']['drop_last'])
 
 # Set the model
 model = WGAN(gen_latent_z=config['model']['gen_latent_z'], gen_init_layer=config['model']['gen_init_layer'],
@@ -82,7 +68,7 @@ def train(epoch, train_loader, g_optimizer, c_optimizer):
     # Critic
     # get the inputs; data is a list of [inputs, labels]
     real_img, _ = data
-    
+
     # Transfer data to device
     real_img = real_img.to(device)
     real_score = model.C(real_img)
@@ -139,9 +125,9 @@ def valid(test_loader):
   g_test_loss = 0.0
   c_test_loss = 0.0
   test_loss = 0.0
-  test_num = 0
+  test_num = 1
 
-  for _, data in enumerate(test_loader, 0):
+  for _, data in enumerate(test_loader):
     # Critic
     # get the inputs; data is a list of [inputs, labels]
     real_img, _ = data
@@ -190,5 +176,5 @@ if __name__ == '__main__':
     print(f'Epoch: {epoch}\t Train loss: {train_loss:.10f}\t Valid accuracy: {test_accuracy:.10f}')
     
     # Save the model
-    save_model(model_name=config['save']['model_name'], epoch=epoch, model=model, optimizer=g_optimizer, loss=train_loss, config=config)
+    save_model(model_name=config['save']['model_name'], epoch=epoch, model=model, optimizer=c_optimizer ,loss=train_loss, config=config)
     

@@ -39,7 +39,8 @@ class Generator(nn.Module):
         self.conv = []
         for i in range(self.num_layers):
             layer = nn.Sequential(
-                nn.ConvTranspose2d(conv_filters[i], conv_filters[i], kernel_size=self.conv_trans[i], stride=self.conv_trans[i]),
+                nn.Upsample(scale_factor=2),
+                # nn.ConvTranspose2d(conv_filters[i], conv_filters[i], kernel_size=self.conv_trans[i], stride=self.conv_trans[i]),
                 nn.Conv2d(conv_filters[i], conv_filters[i+1], kernel_size=self.conv_kernels[i], stride=self.conv_strides[i], padding=self.conv_pads[i]),
                 nn.BatchNorm2d(conv_filters[i+1]),
                 nn.ReLU())

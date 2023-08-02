@@ -1,9 +1,9 @@
 # Data parameters
 data:
   seed: 777
-  data_path: '~/.pytorch/EMNIST_data/'
+  data_path: '~/.pytorch/CIFAR_data/'
   download: True
-  batch_size: 1024
+  batch_size: 256
   shuffle: True
   drop_last: True
   download: True
@@ -13,31 +13,31 @@ data:
 # Model parameters
 model:
   gen_latent_z : 100
-  gen_init_layer : [7,7,64]
+  gen_init_layer : [7,7,32]
   gen_conv_trans : [2,2,1,1]
-  gen_conv_filters : [128,64,64,1]
+  gen_conv_filters : [64,32,32,3]
   gen_conv_kernels : [5,5,5,5]
-  gen_conv_strides : [1,1,1,1]
+  gen_conv_strides : [1,1,2,2]
   gen_conv_pads : [2,2,2,2]
   gen_dropout_rate : 0.1
-  crt_input_img : [28,28,1]
-  crt_conv_filters : [64,64,128,128]
+  crt_input_img : [28,28,3]
+  crt_conv_filters : [32,32,64,64]
   crt_conv_kernels : [5,5,5,5]
   crt_conv_strides : [2,2,2,1]
   crt_conv_pads : [2,2,2,2]
-  crt_dropout_rate : 0.4
+  crt_dropout_rate : 0.2
 
 # Training parameters
 train:
-  epochs: 500
-  lr: 0.001
+  epochs: 10000
+  lr: 0.00005
   gen_iteration : 5
-  crt_clip_value : 0.02
+  crt_clip_value : 0.01
 
 # Save
 save:
-  model_name: 'emnist'
+  model_name: 'cifar10'
 
 # Other parameters
 others:
-  log_period: 10
+  log_period: 4
